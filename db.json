@@ -17,7 +17,22 @@
         "test": {},
         "UAT": {}
       },
-      "tests": [],
+      "tests": [
+        {
+          "id": "93b91ccd-c7c2-4d70-88e4-d87f6d31193f",
+          "name": "Pruebas CV tarea 29121",
+          "environment": "develop",
+          "data": {
+            "idLote": "6014",
+            "idPropuesta": "4517",
+            "contrato": "1278"
+          },
+          "description": "<p>Este es el contenido<br></p><p></p>",
+          "functional": "Borja Muñoz",
+          "relatedTask": "https://github.com/borjamrd-atm/generador-pruebas",
+          "createdAt": "2025-12-05T10:42:01.373Z"
+        }
+      ],
       "createdAt": "2025-12-05T10:24:01.377Z"
     }
   ]

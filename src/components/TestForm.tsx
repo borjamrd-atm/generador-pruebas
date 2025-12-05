@@ -44,6 +44,8 @@ export default function TestForm({ projectId, testId }: Props) {
 
   const [name, setName] = useState("");
   const [environment, setEnvironment] = useState("");
+  const [functional, setFunctional] = useState("");
+  const [relatedTask, setRelatedTask] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,6 +76,8 @@ export default function TestForm({ projectId, testId }: Props) {
           setTest(t);
           setName(t.name || "");
           setEnvironment(t.environment);
+          setFunctional(t.functional || "");
+          setRelatedTask(t.relatedTask || "");
           setDescriptionHtml(t.description);
 
           // Reconstruct data state
@@ -109,7 +113,6 @@ export default function TestForm({ projectId, testId }: Props) {
       setSelectedKeys(new Set(Object.keys(envData)));
       setCustomData([]);
     }
-    // If switching env in edit mode (optional feature), logic would go here
   }, [environment, project, testId]);
 
   const toggleKey = (key: string) => {
@@ -156,6 +159,8 @@ export default function TestForm({ projectId, testId }: Props) {
       await updateTest(projectId, testId, {
         name,
         environment,
+        functional,
+        relatedTask,
         description: descriptionHtml,
         data: finalData,
       });
@@ -165,7 +170,9 @@ export default function TestForm({ projectId, testId }: Props) {
         name,
         environment,
         finalData,
-        descriptionHtml
+        descriptionHtml,
+        functional,
+        relatedTask
       );
     }
 
@@ -227,29 +234,53 @@ export default function TestForm({ projectId, testId }: Props) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Environment</Label>
-                <Select
-                  onValueChange={setEnvironment}
-                  value={environment}
-                  required
-                  disabled={!!testId}
-                >
-                  <SelectTrigger className="print:hidden">
-                    <SelectValue placeholder="Select Environment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {project.environments.map((env) => (
-                      <SelectItem key={env} value={env}>
-                        {env}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Print view for env */}
-                <div className="hidden print:block font-mono mb-2">
-                  Environment: {environment}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Environment</Label>
+                  <Select
+                    onValueChange={setEnvironment}
+                    value={environment}
+                    required
+                    disabled={!!testId}
+                  >
+                    <SelectTrigger className="print:hidden">
+                      <SelectValue placeholder="Select Environment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {project.environments.map((env) => (
+                        <SelectItem key={env} value={env}>
+                          {env}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {/* Print view for env */}
+                  <div className="hidden print:block font-mono mb-2">
+                    Environment: {environment}
+                  </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="functional">Funcional</Label>
+                  <Input
+                    id="functional"
+                    placeholder="Tester Name"
+                    value={functional}
+                    onChange={(e) => setFunctional(e.target.value)}
+                    className="print:border-0 print:px-0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="relatedTask">Tarea Relacionada</Label>
+                <Input
+                  id="relatedTask"
+                  placeholder="Task ID or Link"
+                  value={relatedTask}
+                  onChange={(e) => setRelatedTask(e.target.value)}
+                  className="print:border-0 print:px-0"
+                />
               </div>
 
               {environment && (

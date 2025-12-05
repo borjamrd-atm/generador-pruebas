@@ -32,6 +32,9 @@ export default function NewTestForm({ projectId }: { projectId: string }) {
   const [descriptionHtml, setDescriptionHtml] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [functional, setFunctional] = useState("");
+  const [relatedTask, setRelatedTask] = useState("");
+
   useEffect(() => {
     getProject(projectId).then((p) => {
       setProject(p || null);
@@ -47,7 +50,15 @@ export default function NewTestForm({ projectId }: { projectId: string }) {
     // Get data for selected env
     const envData = project.data[environment] || {};
 
-    await createTest(projectId, name, environment, envData, descriptionHtml); // Description HTML saved as string
+    await createTest(
+      projectId,
+      name,
+      environment,
+      envData,
+      functional,
+      relatedTask,
+      descriptionHtml
+    );
     setIsSubmitting(false);
     router.push(`/projects/${projectId}`);
     router.refresh();
