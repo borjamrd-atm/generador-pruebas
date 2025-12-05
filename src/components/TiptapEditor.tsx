@@ -53,6 +53,31 @@ export default function TiptapEditor({
         class:
           "prose prose-sm sm:prose-base dark:prose-invert focus:outline-none min-h-[200px] w-full max-w-none p-4",
       },
+      handlePaste: (view, event, slice) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const item = items.find((item) => item.type.indexOf("image") === 0);
+
+        if (item) {
+          event.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const base64 = e.target?.result as string;
+              if (base64) {
+                view.dispatch(
+                  view.state.tr.replaceSelectionWith(
+                    view.state.schema.nodes.image.create({ src: base64 })
+                  )
+                );
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+          return true;
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
