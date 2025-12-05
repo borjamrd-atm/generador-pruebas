@@ -204,3 +204,26 @@ export async function getTest(
   const project = await getProject(projectId);
   return project?.tests.find((t) => t.id === testId);
 }
+
+export async function duplicateTest(projectId: string, testId: string) {
+  const db = await getDB();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project) throw new Error("Project not found");
+
+  const testToDuplicate = project.tests.find((t) => t.id === testId);
+  if (!testToDuplicate) throw new Error("Test not found");
+
+  const newTest: TestRecord = {
+    ...testToDuplicate,
+    id: uuidv4(),
+    name: `Copia-${testToDuplicate.name}`,
+    description: "",
+    createdAt: new Date().toISOString(),
+    // Updating the date field as requested "con la fecha actualizada"
+    date: new Date().toISOString(),
+  };
+
+  project.tests.unshift(newTest);
+  await saveDB(db);
+  return newTest;
+}

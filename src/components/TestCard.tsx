@@ -7,10 +7,10 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { TestRecord, deleteTest } from "@/lib/storage";
+import { TestRecord, deleteTest, duplicateTest } from "@/lib/storage";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -38,6 +38,14 @@ export default function TestCard({ test }: { test: TestRecord }) {
     router.refresh();
   };
 
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    await duplicateTest(projectId, test.id);
+    router.refresh();
+  };
+
   return (
     <div className="relative group">
       <Link href={`/projects/${projectId}/test/${test.id}`} className="block">
@@ -59,24 +67,33 @@ export default function TestCard({ test }: { test: TestRecord }) {
         </Card>
       </Link>
 
-      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 w-full">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleDuplicate}
+          className="h-8 text-xs"
+        >
+          <Copy className="h-3 w-3 mr-2" />
+          Copia prueba
+        </Button>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              size="icon"
-              className="h-8 w-8"
+              size="sm"
               onClick={(e) => e.stopPropagation()}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" /> Eliminar
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent onClick={(e) => e.stopPropagation()}>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Test?</AlertDialogTitle>
+              <AlertDialogTitle>Eliminar prueba?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                test record.
+                Esta acción no puede deshacerse. Esta eliminará permanentemente
+                la prueba.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -87,7 +104,7 @@ export default function TestCard({ test }: { test: TestRecord }) {
                 onClick={handleDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete
+                Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
