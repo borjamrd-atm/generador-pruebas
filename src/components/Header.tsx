@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Upload, AlertTriangle, FileText } from "lucide-react";
-import { exportDB, importDB } from "@/lib/storage";
+import { db } from "@/lib/db";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
@@ -55,7 +55,9 @@ export default function Header() {
 
   const handleExport = async () => {
     try {
-      const jsonStr = await exportDB();
+      const projects = await db.projects.toArray();
+      const exportData = { projects };
+      const jsonStr = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -89,16 +91,24 @@ export default function Header() {
     setIsImporting(true);
     try {
       const text = await pendingFile.text();
-      const success = await importDB(text);
-      if (success) {
-        router.refresh();
+      const data = JSON.parse(text);
+      if (data && Array.isArray(data.projects)) {
+        // Transaction to clear and add
+        await db.transaction("rw", db.projects, async () => {
+          await db.projects.clear();
+          await db.projects.bulkAdd(data.projects);
+        });
+
         alert("Database imported successfully!");
+        // router.refresh(); // Not strictly needed with liveQuery
       } else {
-        alert("Failed to import database. Invalid format.");
+        alert(
+          "Failed to import database. Invalid format (missing projects array)."
+        );
       }
     } catch (error) {
       console.error("Import error", error);
-      alert("Error reading file.");
+      alert("Error reading file or invalid JSON.");
     } finally {
       setIsImporting(false);
       setPendingFile(null);

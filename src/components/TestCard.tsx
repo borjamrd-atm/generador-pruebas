@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Card,
   CardHeader,
@@ -7,11 +5,12 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { TestRecord, deleteTest, duplicateTest } from "@/lib/storage";
+import { TestRecord, db } from "@/lib/db";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { v4 as uuidv4 } from "uuid";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,20 +29,47 @@ export default function TestCard({ test }: { test: TestRecord }) {
   const projectId = params.id as string;
 
   const handleDelete = async (e: React.MouseEvent) => {
-    // Prevent navigation to detail view
     e.preventDefault();
     e.stopPropagation();
 
-    await deleteTest(projectId, test.id);
-    router.refresh();
+    try {
+      await db.projects
+        .where("id")
+        .equals(projectId)
+        .modify((project) => {
+          project.tests = project.tests.filter((t) => t.id !== test.id);
+        });
+      // No need to refresh, useLiveQuery in parent will update
+    } catch (error) {
+      console.error("Failed to delete test:", error);
+    }
   };
 
   const handleDuplicate = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    await duplicateTest(projectId, test.id);
-    router.refresh();
+    try {
+      await db.projects
+        .where("id")
+        .equals(projectId)
+        .modify((project) => {
+          const testToDuplicate = project.tests.find((t) => t.id === test.id);
+          if (testToDuplicate) {
+            const newTest: TestRecord = {
+              ...testToDuplicate,
+              id: uuidv4(),
+              name: `Copia-${testToDuplicate.name}`,
+              description: "",
+              createdAt: new Date().toISOString(),
+              date: new Date().toISOString(),
+            };
+            project.tests.unshift(newTest);
+          }
+        });
+    } catch (error) {
+      console.error("Failed to duplicate test:", error);
+    }
   };
 
   return (

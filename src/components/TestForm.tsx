@@ -21,15 +21,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import TiptapEditor from "@/components/TiptapEditor";
-import {
-  createTest,
-  updateTest,
-  getProject,
-  Project,
-  TestRecord,
-} from "@/lib/storage";
+import { db, Project, TestRecord } from "@/lib/db";
 import { useReactToPrint } from "react-to-print";
 import { Printer, Plus, Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   projectId: string;
@@ -69,7 +64,8 @@ export default function TestForm({ projectId, testId }: Props) {
 
   useEffect(() => {
     async function loadData() {
-      const p = await getProject(projectId);
+      // Using db.projects.get instead of storage getProject
+      const p = await db.projects.get(projectId);
       setProject(p || null);
 
       if (testId && p) {
@@ -159,34 +155,50 @@ export default function TestForm({ projectId, testId }: Props) {
       if (key) finalData[key] = value;
     });
 
-    if (testId) {
-      await updateTest(projectId, testId, {
-        name,
-        environment,
-        functional,
-        relatedTask,
-        layer,
-        date,
-        description: descriptionHtml,
-        data: finalData,
-      });
-    } else {
-      await createTest(
-        projectId,
-        name,
-        environment,
-        finalData,
-        descriptionHtml,
-        functional,
-        relatedTask,
-        layer,
-        date
-      );
-    }
+    try {
+      await db.projects
+        .where("id")
+        .equals(projectId)
+        .modify((p) => {
+          if (testId) {
+            const idx = p.tests.findIndex((t) => t.id === testId);
+            if (idx !== -1) {
+              p.tests[idx] = {
+                ...p.tests[idx],
+                name,
+                environment,
+                functional,
+                relatedTask,
+                layer,
+                date,
+                description: descriptionHtml,
+                data: finalData,
+              };
+            }
+          } else {
+            const newTest: TestRecord = {
+              id: uuidv4(),
+              name,
+              environment,
+              data: finalData,
+              description: descriptionHtml,
+              functional,
+              relatedTask,
+              layer,
+              date,
+              createdAt: new Date().toISOString(),
+            };
+            p.tests.unshift(newTest);
+          }
+        });
 
-    setIsSubmitting(false);
-    router.push(`/projects/${projectId}`);
-    router.refresh();
+      setIsSubmitting(false);
+      router.push(`/projects/${projectId}`);
+      // router.refresh(); // Not strictly needed with Dexie liveQuery but safe to leave
+    } catch (error) {
+      console.error("Failed to save test:", error);
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;
