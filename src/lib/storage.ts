@@ -50,6 +50,29 @@ async function saveDB(db: DB) {
   await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
 }
 
+export async function exportDB(): Promise<string> {
+  try {
+    return await fs.readFile(DB_PATH, "utf-8");
+  } catch (error) {
+    return JSON.stringify(defaultDB, null, 2);
+  }
+}
+
+export async function importDB(jsonContent: string): Promise<boolean> {
+  try {
+    // Validate JSON
+    const parsed = JSON.parse(jsonContent);
+    // Basic structural validation could go here if needed
+    if (!parsed.projects) throw new Error("Invalid DB format");
+
+    await fs.writeFile(DB_PATH, JSON.stringify(parsed, null, 2), "utf-8");
+    return true;
+  } catch (error) {
+    console.error("Import failed:", error);
+    return false;
+  }
+}
+
 // Actions
 
 export async function getProjects(): Promise<Project[]> {

@@ -11,7 +11,8 @@
       "data": {
         "Develop": {
           "idLote": "9014",
-          "idPropuesta": "9715"
+          "idPropuesta": "9715",
+          "sip": "121212"
         },
         "Test": {
           "idLote": "9014",
@@ -21,21 +22,20 @@
       },
       "tests": [
         {
-          "id": "528de3a0-45ed-40f2-9739-2748de3d87c6",
+          "id": "381f395f-0245-438c-b13f-cbcdce2dad37",
           "name": "Prueba - PGD6458-4162 - Desactivar con nivel de atribución",
           "environment": "Develop",
           "data": {
             "idLote": "9014",
             "idPropuesta": "9715",
-            "producto": "60116",
-            "contrato": "01001000010110207152"
+            "sip": "121212"
           },
-          "description": "<p>Hemos cogido la primera tarifa bonificada del concepto Interés descubierto para el producto 60116 del contrato 01001000010110207152, las pruebas deben poder demostrar:&nbsp;</p><ul><li><p>Que para un valor superior al nivel de atribución aparezca un error controlado.&nbsp;</p></li></ul><ul><li><p>Que para un valor que esté dentro de los niveles de atribución se pueda realizar la validación.&nbsp;</p></li></ul><p>&nbsp;</p><p>Proceso:&nbsp;</p><p>Desde el entorno de dev, con el centro 1, se comienza una nueva contratación, se configuran los datos básicos indicando disponibilidad individual, se selecciona el producto 60116 y se procede a editar las condiciones económicas. Se realizan dos modificaciones del mismo concepto: la primera supera los niveles de atribución, la segunda no. En el segundo caso la validación es correcta.&nbsp;</p><p></p><p></p><p>&nbsp;</p><p></p><p></p><p></p><p></p>",
+          "description": "<p>Esto es una prueba</p>",
           "functional": "Borja Muñoz",
           "relatedTask": "https://jira.bancamarch.es/browse/PGD6458-4162",
           "layer": "FRONT",
           "date": "2025-12-05",
-          "createdAt": "2025-12-05T12:07:51.808Z"
+          "createdAt": "2025-12-05T13:21:51.804Z"
         }
       ],
       "createdAt": "2025-12-05T11:58:37.336Z"

@@ -86,7 +86,7 @@ export default async function ProjectPage({ params }: Props) {
           </div>
 
           <div className="grid gap-4">
-            {project.tests.length === 0 && (
+            {project.tests?.length === 0 && (
               <Card className="bg-muted/5 border-dashed">
                 <CardContent className="flex flex-col items-center justify-center p-10 text-muted-foreground">
                   <p>No hay pruebas creadas.</p>
@@ -94,7 +94,7 @@ export default async function ProjectPage({ params }: Props) {
                 </CardContent>
               </Card>
             )}
-            {project.tests.map((test) => (
+            {project.tests?.map((test) => (
               <TestCard key={test.id} test={test} />
             ))}
           </div>
