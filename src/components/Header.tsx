@@ -1,5 +1,7 @@
 "use client";
 
+import { ModeToggle } from "@/components/mode-toggle";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -147,6 +149,7 @@ export default function Header() {
           ref={logoInputRef}
           onChange={handleLogoSelect}
         />
+        <ModeToggle />
         <Button
           variant="outline"
           size="sm"
