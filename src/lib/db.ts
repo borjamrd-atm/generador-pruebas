@@ -23,15 +23,22 @@ export type Project = {
   createdAt: string;
 };
 
+export type Settings = {
+  id: string; // 'global'
+  logo?: string; // base64
+};
+
 // We are using a single table 'projects' to store the full project tree for now
 // to maintain compatibility with the existing nested JSON structure.
 const db = new Dexie("TestGeneratorDB") as Dexie & {
   projects: EntityTable<Project, "id">;
+  settings: EntityTable<Settings, "id">;
 };
 
 // Schema declaration:
 db.version(1).stores({
   projects: "id, name, createdAt", // primary key "id"
+  settings: "id", // Store global settings, id='global'
 });
 
 export { db };

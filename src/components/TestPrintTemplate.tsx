@@ -1,5 +1,6 @@
-import { TestRecord } from "@/lib/db";
+import { TestRecord, db } from "@/lib/db";
 import { format } from "date-fns";
+import { useLiveQuery } from "dexie-react-hooks";
 
 interface TestPrintTemplateProps {
   test: TestRecord;
@@ -10,6 +11,8 @@ export const TestPrintTemplate = ({
   test,
   projectName,
 }: TestPrintTemplateProps) => {
+  const settings = useLiveQuery(() => db.settings.get("global"));
+
   return (
     <div className="p-8 max-w-2xl mx-auto space-y-6 print:block hidden">
       <div className="border-b pb-4 mb-6">
@@ -25,6 +28,13 @@ export const TestPrintTemplate = ({
               Fecha creación: {format(new Date(test.createdAt), "dd/MM/yyyy")}
             </p>
           </div>
+          {settings?.logo && (
+            <img
+              src={settings.logo}
+              alt="Logo"
+              className="h-16 w-auto object-contain"
+            />
+          )}
         </div>
       </div>
 

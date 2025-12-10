@@ -1,10 +1,5 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Upload, AlertTriangle, FileText } from "lucide-react";
-import { db } from "@/lib/db";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,12 +9,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
+import {
+  AlertTriangle,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Upload,
+} from "lucide-react";
+import { useRef, useState } from "react";
 
 export default function Header() {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -116,9 +120,43 @@ export default function Header() {
     }
   };
 
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        await db.settings.put({ id: "global", logo: base64 });
+        alert("Logo actualizado correctamente");
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset
+    if (logoInputRef.current) {
+      logoInputRef.current.value = "";
+    }
+  };
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto py-3 px-4 flex justify-end items-center gap-2">
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          ref={logoInputRef}
+          onChange={handleLogoSelect}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => logoInputRef.current?.click()}
+          className="gap-2"
+        >
+          <ImageIcon className="h-4 w-4" />
+          Logo
+        </Button>
+
         <Button
           variant="outline"
           size="sm"
