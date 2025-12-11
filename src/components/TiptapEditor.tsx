@@ -1,30 +1,30 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
-import {
-  Bold,
-  Italic,
-  Code,
-  List,
-  ListOrdered,
-  Quote,
-  ImageIcon,
-  SquareCode,
-} from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { Toggle } from "@/components/ui/toggle";
 import CodeBlock from "@tiptap/extension-code-block";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import {
+  Bold,
+  Code,
+  ImageIcon,
+  Italic,
+  List,
+  ListOrdered,
+  Quote,
+  SquareCode,
+} from "lucide-react";
+import { useEffect } from "react";
 
 type EditorProps = {
   content?: string;
@@ -42,11 +42,16 @@ export default function TiptapEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false,
+      }),
       Placeholder.configure({
         placeholder,
       }),
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+      }),
       CodeBlock.configure({
         HTMLAttributes: {
           class: "bg-muted rounded-md p-4 font-mono text-sm",
@@ -90,6 +95,12 @@ export default function TiptapEditor({
       onChange(editor.getHTML());
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML() && !editor.isFocused) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   const addImage = (url: string) => {
     if (url && editor) {
