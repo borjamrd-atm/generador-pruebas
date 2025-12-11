@@ -14,9 +14,9 @@ export const TestPrintTemplate = ({
   const settings = useLiveQuery(() => db.settings.get("global"));
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-6 print:block hidden">
+    <div className="p-8 max-w-2xl mx-auto space-y-6 print:block hidden relative">
       <div className="border-b pb-4 mb-6">
-        <div className="flex justify-between items-end">
+        <div className="flex justify-between items-end mt-6">
           <div>
             <p className="text-muted-foreground">
               {projectName ? `Proyecto: ${projectName}` : ""}
@@ -32,7 +32,7 @@ export const TestPrintTemplate = ({
             <img
               src={settings.logo}
               alt="Logo"
-              className="h-16 w-auto object-contain"
+              className="h-16 absolute w-auto top-0 right-0 object-contain"
             />
           )}
         </div>
