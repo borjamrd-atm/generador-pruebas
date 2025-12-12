@@ -52,13 +52,20 @@ export default function Header() {
   const handleExport = async () => {
     try {
       const projects = await db.projects.toArray();
-      const exportData = { projects };
+      const settings = await db.settings.toArray();
+      const exportData = { projects, settings };
       const jsonStr = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `db_export_${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `db_export_${
+        new Date()
+          .toISOString()
+          .replace(/T/, "_")
+          .replace(/:/g, "-")
+          .split(".")[0]
+      }.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -110,9 +117,18 @@ export default function Header() {
 
     setIsImporting(true);
     try {
-      await db.transaction("rw", db.projects, async () => {
+      await db.transaction("rw", db.projects, db.settings, async () => {
         await db.projects.clear();
         await db.projects.bulkAdd(importState.incomingData.projects);
+
+        // Handle settings (logo)
+        if (
+          importState.incomingData.settings &&
+          Array.isArray(importState.incomingData.settings)
+        ) {
+          await db.settings.clear();
+          await db.settings.bulkPut(importState.incomingData.settings);
+        }
       });
       alert("Base de datos importada (Sobreescrita) correctamente!");
       window.location.reload(); // Force refresh to show new data
@@ -135,9 +151,29 @@ export default function Header() {
         importState.incomingData.projects
       );
 
-      await db.transaction("rw", db.projects, async () => {
+      await db.transaction("rw", db.projects, db.settings, async () => {
         await db.projects.clear();
         await db.projects.bulkAdd(mergedProjects);
+
+        // Handle settings (logo) - Merge strategy: Keep local if exists, else use incoming
+        if (
+          importState.incomingData.settings &&
+          Array.isArray(importState.incomingData.settings)
+        ) {
+          const currentSettings = await db.settings.toArray();
+          const incomingSettings = importState.incomingData.settings;
+
+          // Simple merge for 'global' setting
+          const currentGlobal = currentSettings.find((s) => s.id === "global");
+          const incomingGlobal = incomingSettings.find(
+            (s: any) => s.id === "global"
+          );
+
+          if (!currentGlobal && incomingGlobal) {
+            await db.settings.put(incomingGlobal);
+          }
+          // If currentGlobal exists, we keep it (do nothing)
+        }
       });
       alert("Base de datos actualizada (Fusionada) correctamente!");
       window.location.reload();
