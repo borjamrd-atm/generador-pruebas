@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 export default function ProjectDetail({ id }: { id: string }) {
   const project = useLiveQuery(() => db.projects.get(id));
@@ -89,6 +90,23 @@ export default function ProjectDetail({ id }: { id: string }) {
       } catch (error) {
         console.error("Failed to save data", error);
       }
+    }
+  };
+
+  const handleDeleteData = async (envName: string, key: string) => {
+    if (!project) return;
+    try {
+      const currentData = { ...project.data };
+      const envData = { ...currentData[envName] };
+
+      delete envData[key];
+      currentData[envName] = envData;
+
+      await db.projects.update(id, {
+        data: currentData,
+      });
+    } catch (error) {
+      console.error("Failed to delete data key", error);
     }
   };
 
@@ -224,7 +242,18 @@ export default function ProjectDetail({ id }: { id: string }) {
                               <span className="font-mono text-muted-foreground">
                                 {k}
                               </span>
-                              <span className="font-medium">{v}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium">{v}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeleteData(env, k)}
+                                  title="Eliminar este dato"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           )
                         )}
