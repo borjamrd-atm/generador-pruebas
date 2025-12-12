@@ -2,33 +2,23 @@
 
 import { ModeToggle } from "@/components/mode-toggle";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ImportConflictModal } from "@/components/ImportConflictModal";
+import { detectConflicts, mergeData } from "@/lib/import-utils"; // Import utility functions
 import { db } from "@/lib/db";
-import {
-  AlertTriangle,
-  Download,
-  FileText,
-  Image as ImageIcon,
-  Upload,
-} from "lucide-react";
+import { Download, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 
 export default function Header() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [importState, setImportState] = useState<{
+    pendingFile: File | null;
+    currentData: any; // Using exact types would be better but for brevity in state
+    incomingData: any;
+    importResult: any;
+  } | null>(null);
 
   const handleDownloadTemplate = () => {
     const template = {
@@ -79,46 +69,84 @@ export default function Header() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPendingFile(file);
-      setShowConfirm(true);
+      setIsImporting(true);
+      try {
+        const text = await file.text();
+        const incomingData = JSON.parse(text);
+
+        if (!incomingData || !Array.isArray(incomingData.projects)) {
+          alert("Invalid file format. 'projects' array missing.");
+          setIsImporting(false);
+          return;
+        }
+
+        const currentProjects = await db.projects.toArray();
+        const result = detectConflicts(currentProjects, incomingData.projects);
+
+        setImportState({
+          pendingFile: file,
+          currentData: { projects: currentProjects },
+          incomingData: incomingData,
+          importResult: result,
+        });
+      } catch (error) {
+        console.error("Error reading file", error);
+        alert("Error reading file or invalid JSON.");
+      } finally {
+        setIsImporting(false);
+      }
     }
-    // Reset input so same file can be selected again if needed
+    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const confirmImport = async () => {
-    if (!pendingFile) return;
+  const handleOverwrite = async () => {
+    if (!importState) return;
 
     setIsImporting(true);
     try {
-      const text = await pendingFile.text();
-      const data = JSON.parse(text);
-      if (data && Array.isArray(data.projects)) {
-        // Transaction to clear and add
-        await db.transaction("rw", db.projects, async () => {
-          await db.projects.clear();
-          await db.projects.bulkAdd(data.projects);
-        });
-
-        alert("Database imported successfully!");
-        // router.refresh(); // Not strictly needed with liveQuery
-      } else {
-        alert(
-          "Failed to import database. Invalid format (missing projects array)."
-        );
-      }
+      await db.transaction("rw", db.projects, async () => {
+        await db.projects.clear();
+        await db.projects.bulkAdd(importState.incomingData.projects);
+      });
+      alert("Base de datos importada (Sobreescrita) correctamente!");
+      window.location.reload(); // Force refresh to show new data
     } catch (error) {
-      console.error("Import error", error);
-      alert("Error reading file or invalid JSON.");
+      console.error("Overwrite failed", error);
+      alert("Error during overwrite.");
     } finally {
       setIsImporting(false);
-      setPendingFile(null);
-      setShowConfirm(false);
+      setImportState(null);
+    }
+  };
+
+  const handleMerge = async () => {
+    if (!importState) return;
+
+    setIsImporting(true);
+    try {
+      const mergedProjects = mergeData(
+        importState.currentData.projects,
+        importState.incomingData.projects
+      );
+
+      await db.transaction("rw", db.projects, async () => {
+        await db.projects.clear();
+        await db.projects.bulkAdd(mergedProjects);
+      });
+      alert("Base de datos actualizada (Fusionada) correctamente!");
+      window.location.reload();
+    } catch (error) {
+      console.error("Merge failed", error);
+      alert("Error during merge.");
+    } finally {
+      setIsImporting(false);
+      setImportState(null);
     }
   };
 
@@ -133,7 +161,6 @@ export default function Header() {
       };
       reader.readAsDataURL(file);
     }
-    // Reset
     if (logoInputRef.current) {
       logoInputRef.current.value = "";
     }
@@ -195,39 +222,19 @@ export default function Header() {
             className="gap-2"
           >
             <Upload className="h-4 w-4" />
-            {isImporting ? "Importando..." : "Importar DB"}
+            {isImporting ? "Procesando..." : "Importar DB"}
           </Button>
         </div>
 
-        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                ¡Advertencia!
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Estás a punto de importar una nueva base de datos. Esta acción
-                <strong> SOBREESCRIBIRÁ</strong> todos los proyectos, entornos y
-                pruebas existentes.
-                <br />
-                <br />
-                Esta acción no se puede deshacer. ¿Deseas continuar?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPendingFile(null)}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmImport}
-                className="bg-destructive hover:bg-destructive/90"
-              >
-                Sí, Importar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {importState && (
+          <ImportConflictModal
+            isOpen={!!importState}
+            onOpenChange={(open) => !open && setImportState(null)}
+            importResult={importState.importResult}
+            onOverwrite={handleOverwrite}
+            onMerge={handleMerge}
+          />
+        )}
       </div>
     </header>
   );
