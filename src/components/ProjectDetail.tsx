@@ -24,10 +24,87 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import { TestPrintTemplate } from "@/components/TestPrintTemplate";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowUpDown } from "lucide-react";
 
 export default function ProjectDetail({ id }: { id: string }) {
   const project = useLiveQuery(() => db.projects.get(id));
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Filter & Sort State
+  const [filterName, setFilterName] = useState("");
+  const [filterLayer, setFilterLayer] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [filterEnv, setFilterEnv] = useState("all");
+  const [sortField, setSortField] = useState<
+    "date" | "relatedTask" | "taskNumber"
+  >("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  // Derive unique values for filters
+  const uniqueLayers = Array.from(
+    new Set(project?.tests?.map((t) => t.layer).filter((t): t is string => !!t))
+  ).sort();
+  const uniqueTypes = Array.from(
+    new Set(
+      project?.tests?.map((t) => t.taskType).filter((t): t is string => !!t)
+    )
+  ).sort();
+  const uniqueEnvs = Array.from(
+    new Set(
+      project?.tests?.map((t) => t.environment).filter((t): t is string => !!t)
+    )
+  ).sort();
+
+  // Filter & Sort Logic
+  const filteredAndSortedTests = project?.tests
+    ?.filter((test) => {
+      const matchName = test.name
+        .toLowerCase()
+        .includes(filterName.toLowerCase());
+      const matchLayer = filterLayer === "all" || test.layer === filterLayer;
+      const matchType = filterType === "all" || test.taskType === filterType;
+      const matchEnv = filterEnv === "all" || test.environment === filterEnv;
+
+      return matchName && matchLayer && matchType && matchEnv;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case "date": {
+          const dateA = new Date(a.date || a.createdAt).getTime();
+          const dateB = new Date(b.date || b.createdAt).getTime();
+          comparison = dateA - dateB;
+          break;
+        }
+        case "relatedTask": {
+          // Get first related task or fallback
+          const taskA = a.relatedTasks?.[0] || a.relatedTask || "";
+          const taskB = b.relatedTasks?.[0] || b.relatedTask || "";
+          comparison = taskA.localeCompare(taskB);
+          break;
+        }
+        case "taskNumber": {
+          // Extract number from end of URL if possible
+          const getTaskNum = (t: typeof a) => {
+            const taskUrl = t.relatedTasks?.[0] || t.relatedTask || "";
+            const match = taskUrl.match(/\/(\d+)$/) || taskUrl.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          comparison = getTaskNum(a) - getTaskNum(b);
+          break;
+        }
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
 
   // Loading state
   // If project is undefined, it might be loading or not found.
@@ -247,16 +324,137 @@ export default function ProjectDetail({ id }: { id: string }) {
             </div>
           </div>
 
+          {/* Filters & Sort Controls */}
+          <Card className="bg-muted/10 border-none shadow-none">
+            <CardContent className="p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Search Name */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Nombre de prueba
+                  </Label>
+                  <Input
+                    placeholder="Buscar..."
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    className="h-9 bg-background"
+                  />
+                </div>
+
+                {/* Filter Layer */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Capa</Label>
+                  <Select value={filterLayer} onValueChange={setFilterLayer}>
+                    <SelectTrigger className="h-9 bg-background">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {uniqueLayers.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filter Type */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Tipo de prueba
+                  </Label>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="h-9 bg-background">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {uniqueTypes.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filter Environment */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Entorno
+                  </Label>
+                  <Select value={filterEnv} onValueChange={setFilterEnv}>
+                    <SelectTrigger className="h-9 bg-background">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {uniqueEnvs.map((e) => (
+                        <SelectItem key={e} value={e}>
+                          {e}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort Controls */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Ordenar por
+                  </Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={sortField}
+                      onValueChange={(v: any) => setSortField(v)}
+                    >
+                      <SelectTrigger className="h-9 bg-background flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Fecha</SelectItem>
+                        <SelectItem value="taskNumber">
+                          Numero de tarea
+                        </SelectItem>
+                        <SelectItem value="relatedTask">
+                          Tarea relacionada
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 bg-background"
+                      onClick={() =>
+                        setSortDirection((prev) =>
+                          prev === "asc" ? "desc" : "asc"
+                        )
+                      }
+                      title={
+                        sortDirection === "asc" ? "Ascendente" : "Descendente"
+                      }
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid gap-4">
-            {project.tests?.length === 0 && (
+            {filteredAndSortedTests?.length === 0 && (
               <Card className="bg-muted/5 border-dashed">
                 <CardContent className="flex flex-col items-center justify-center p-10 text-muted-foreground">
-                  <p>No hay pruebas creadas.</p>
-                  <p>Click "Nueva prueba" para crear una.</p>
+                  <p>No se encontraron pruebas.</p>
+                  {project.tests?.length === 0 && (
+                    <p>Click "Nueva prueba" para crear una.</p>
+                  )}
                 </CardContent>
               </Card>
             )}
-            {project.tests?.map((test) => (
+            {filteredAndSortedTests?.map((test) => (
               <TestCard key={test.id} test={test} />
             ))}
           </div>
