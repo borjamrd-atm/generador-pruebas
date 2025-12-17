@@ -327,38 +327,7 @@ export default function ProjectDetail({ id }: { id: string }) {
           {/* Filters & Sort Controls */}
           <Card className="bg-muted/10 border-none shadow-none">
             <CardContent className="p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* Search Name */}
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">
-                    Nombre de prueba
-                  </Label>
-                  <Input
-                    placeholder="Buscar..."
-                    value={filterName}
-                    onChange={(e) => setFilterName(e.target.value)}
-                    className="h-9 bg-background"
-                  />
-                </div>
-
-                {/* Filter Layer */}
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Capa</Label>
-                  <Select value={filterLayer} onValueChange={setFilterLayer}>
-                    <SelectTrigger className="h-9 bg-background">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {uniqueLayers.map((l) => (
-                        <SelectItem key={l} value={l}>
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
+              <div className="flex gap-4">
                 {/* Filter Type */}
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
@@ -378,6 +347,36 @@ export default function ProjectDetail({ id }: { id: string }) {
                     </SelectContent>
                   </Select>
                 </div>
+                {/* Search Name */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Nombre de prueba
+                  </Label>
+                  <Input
+                    placeholder="Buscar..."
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    className="h-9 bg-background min-w-[30rem]"
+                  />
+                </div>
+
+                {/* Filter Layer */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Capa</Label>
+                  <Select value={filterLayer} onValueChange={setFilterLayer}>
+                    <SelectTrigger className="h-9 bg-background min-w-[10rem]">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {uniqueLayers.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {/* Filter Environment */}
                 <div className="space-y-1">
@@ -385,7 +384,7 @@ export default function ProjectDetail({ id }: { id: string }) {
                     Entorno
                   </Label>
                   <Select value={filterEnv} onValueChange={setFilterEnv}>
-                    <SelectTrigger className="h-9 bg-background">
+                    <SelectTrigger className="h-9 bg-background  min-w-[10rem]">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -400,7 +399,7 @@ export default function ProjectDetail({ id }: { id: string }) {
                 </div>
 
                 {/* Sort Controls */}
-                <div className="space-y-1">
+                <div className="space-y-1 ms-auto">
                   <Label className="text-xs text-muted-foreground">
                     Ordenar por
                   </Label>
@@ -409,7 +408,7 @@ export default function ProjectDetail({ id }: { id: string }) {
                       value={sortField}
                       onValueChange={(v: any) => setSortField(v)}
                     >
-                      <SelectTrigger className="h-9 bg-background flex-1">
+                      <SelectTrigger className="h-9 bg-background flex-1 min-w-[10rem]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
