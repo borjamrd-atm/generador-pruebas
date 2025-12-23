@@ -1,0 +1,15 @@
+#!/bin/sh
+        # ------------------------------------------------------------------
+        # PRE-COMMIT HOOK
+        # This script runs before the commit is created.
+        # If it exits with a non-zero status, the commit is aborted.
+        # ------------------------------------------------------------------
+
+        echo "→ ⚡ Running pre-commit checks..."
+
+        # Example: Run linter
+        # npm run lint
+
+        # Example: Run tests
+        pnpm run test
+        

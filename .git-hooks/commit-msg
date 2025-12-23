@@ -1,0 +1,12 @@
+#!/bin/sh
+        # ------------------------------------------------------------------
+        # COMMIT-MSG HOOK
+        # This script validates the commit message.
+        # The message file path is passed as the first argument ($1).
+        # ------------------------------------------------------------------
+
+        echo "→ 📝 Checking commit message format..."
+
+        # Example: Use commitlint
+        # npx commitlint --edit "$1"
+        

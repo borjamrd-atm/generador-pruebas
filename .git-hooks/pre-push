@@ -1,0 +1,18 @@
+#!/bin/sh
+        # ------------------------------------------------------------------
+        # PRE-PUSH HOOK
+        # This script runs before changes are pushed to the remote.
+        # ------------------------------------------------------------------
+
+        echo "→ 🚀 Running pre-push checks..."
+
+        # Example: Prevent pushing directly to main
+        # Note: The double backslash below is required for JS string escaping.
+        current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+        if [ "$current_branch" = "main" ]; then
+            echo "⚠️  Direct push to 'main' is restricted."
+            # Uncomment the next line to enforce the block:
+            # exit 1
+        fi
+        
